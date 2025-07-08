@@ -1,19 +1,20 @@
+from prophet import Prophet
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-import numpy as np
 
-def predict_traffic(csv_path="data/metrics.csv"):
+def predict_traffic_prophet(csv_path="data/metrics.csv"):
     df = pd.read_csv(csv_path)
-    df['time_index'] = np.arange(len(df))
+    df = df.rename(columns={"timestamp": "ds", "request_rate": "y"})
+    df['ds'] = pd.to_datetime(df['ds'])
     
-    model = LinearRegression()
-    model.fit(df[['time_index']], df[['request_rate']])
+    model = Prophet(daily_seasonality=True, weekly_seasonality=True)
+    model.fit(df[['ds', 'y']])
     
-    future_index = pd.DataFrame({'time_index': np.arange(len(df), len(df) + 5)})
-    prediction = model.predict(future_index)
-
+    future = model.make_future_dataframe(periods=60, freq='T')  # Predict next 60 mins
+    forecast = model.predict(future)
     
-    return prediction.mean()  # average of next 5 predictions
+    predicted_traffic = forecast[['ds', 'yhat']].tail(60)['yhat'].mean()
+    return predicted_traffic
 
 if __name__ == "__main__":
-    print(f"Predicted average traffic: {predict_traffic()}")
+    pred = predict_traffic_prophet()
+    print(f"Prophet predicted average traffic next hour: {pred:.2f}")
