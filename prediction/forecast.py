@@ -9,7 +9,7 @@ def predict_traffic_prophet(csv_path="data/metrics.csv"):
     model = Prophet(daily_seasonality=True, weekly_seasonality=True)
     model.fit(df[['ds', 'y']])
     
-    future = model.make_future_dataframe(periods=60, freq='T')  # Predict next 60 mins
+    future = model.make_future_dataframe(periods=60, freq='min')  # Predict next 60 mins
     forecast = model.predict(future)
     
     predicted_traffic = forecast[['ds', 'yhat']].tail(60)['yhat'].mean()
